@@ -1,7 +1,7 @@
 {
-  "name": "@ssense/sscheduler",
-  "version": "1.1.1",
-  "description": "Flexible scheduler to find free time slots in the schedule of a resource",
+  "name": "adjust-balance",
+  "version": "1.0.0",
+  "description": "Adjust start-of-month and end-of-month balances excluding transactions",
   "main": "./dist/index.js",
   "scripts": {
     "compile": "rm -rf dist/* && tsc",
@@ -13,16 +13,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SSENSE/node-sscheduler.git"
+    "url": "git+https://github.com/rundef/node-adjust-balance.git"
   },
   "keywords": [
-    "scheduler",
-    "schedule",
-    "availability",
-    "appointment",
-    "booking",
-    "reservation",
-    "time-slot"
+    "adjust",
+    "balance",
+    "transaction"
   ],
   "author": "Mickael Burguet <www.rundef.com>",
   "publishConfig": {
@@ -34,13 +30,10 @@
     "npm": ">= 3"
   },
   "dependencies": {
-    "lodash": "^4.13.1",
     "moment": "^2.17.1"
   },
   "devDependencies": {
-    "@ssense/tslint-config": "^4.0.0",
     "@types/chai": "^3.4.34",
-    "@types/lodash": "^4.14.50",
     "@types/mocha": "^2.2.37",
     "@types/node": "^7.0.0",
     "chai": "^3.5.0",
@@ -49,6 +42,7 @@
     "nyc": "^8.4.0",
     "ts-node": "^1.6.1",
     "tslint": "^4.3.1",
+    "tslint-microsoft-contrib": "^4.0.0",
     "typescript": "^2.1.5"
   },
   "nyc": {

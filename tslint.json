@@ -1,6 +1,8 @@
 {
-    "extends": "@ssense/tslint-config",
-    "rules": {
-        "chai-vague-errors": false
-    }
+  "rulesDirectory": [
+    "./node_modules/tslint-microsoft-contrib"
+  ],
+  "rules": {
+    "chai-vague-errors": false
+  }
 }

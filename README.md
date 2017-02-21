@@ -1,9 +1,9 @@
-# sscheduler
+# adjust-balance
 
-[![Build Status](https://travis-ci.org/SSENSE/node-sscheduler.svg?branch=master)](https://travis-ci.org/SSENSE/node-sscheduler)
-[![Coverage Status](https://coveralls.io/repos/github/SSENSE/node-sscheduler/badge.svg?branch=master)](https://coveralls.io/github/SSENSE/node-sscheduler?branch=master)
-[![Latest Stable Version](https://img.shields.io/npm/v/@ssense/sscheduler.svg)](https://www.npmjs.com/package/@ssense/sscheduler)
-[![Known Vulnerabilities](https://snyk.io/test/npm/@ssense/sscheduler/badge.svg)](https://snyk.io/test/npm/@ssense/sscheduler)
+[![Build Status](https://travis-ci.org/rundef/node-adjust-balance.svg?branch=master)](https://travis-ci.org/rundef/node-adjust-balance)
+[![Coverage Status](https://coveralls.io/repos/github/rundef/node-adjust-balance/badge.svg?branch=master)](https://coveralls.io/github/rundef/node-adjust-balance?branch=master)
+[![Latest Stable Version](https://img.shields.io/npm/v/adjust-balance.svg)](https://www.npmjs.com/package/adjust-balance)
+[![Known Vulnerabilities](https://snyk.io/test/npm/adjust-balance/badge.svg)](https://snyk.io/test/npm/adjust-balance)
 
 Flexible scheduler to find free time slots in the schedule of a resource (which could be a person, a meeting room, a car, etc...)
 
@@ -12,157 +12,36 @@ Flexible scheduler to find free time slots in the schedule of a resource (which 
 ## Installation
 
 ```bash
-npm install @ssense/sscheduler
+npm install adjust-balance
 ```
 
 ## Basic usage
 
-As an example, let's say that we want to book a 1 hour appointment with a doctor in the month of february considering that:
-
-  * We can only book on weekdays from *9AM* to *5PM*
-
-  * We can't book between noon and *1PM* (lunch time !)
-
-  * The doctor is on vacation the week of the *20th*
-
-  * There are already two one-hour appointments booked on *February 1st* at *1PM* and *2PM*
-
 ```javascript
-import {Scheduler} from '@ssense/sscheduler';
+import {BalanceAdjuster} from 'adjust-balance';
 
-const scheduler = new Scheduler();
-const availability = scheduler.getAvailability({
-    from: '2017-02-01',
-    to: '2017-03-01',
-    duration: 60,
-    interval: 60,
-    schedule: {
-        weekdays: {
-            from: '09:00', to: '17:00',
-            unavailability: [
-                { from: '12:00', to: '13:00' }
-            ]
-        },
-        unavailability: [
-            { from: '2017-02-20 00:00', to: '2017-02-27 00:00' }
-        ],
-        allocated: [
-          { from: '2017-02-01 13:00' , duration: 60 },
-          { from: '2017-02-01 14:00' , duration: 60 }
-        ]
-    }
-});
-```
-
-The returned value is a structure that looks like the following:
-
-```js
-{
-  '2017-02-01': [
-    { time: '09:00', available: true },
-    { time: '10:00', available: true }
-    // ...
+const adjuster = new BalanceAdjuster();
+const balances = adjuster.adjust({
+  balances: [
+    { date: '2016-11-01', balance: 100 },
+    { date: '2016-11-14', balance: 350 },
+    { date: '2016-11-15', balance: 328 },
+    { date: '2016-12-03', balance: 564 }
+  ],
+  transactions: [
+    { date: '2016-11-02', amount: 200, isDeposit: true },
+    { date: '2016-12-02', amount: 200, isDeposit: true }
   ]
-  // ...
-}
-```
-
-# Options
-
-The possible options for the **getAvailability** function are:
-
-<details>
- <summary>from (required)</summary>
- The start date for which we want to get availability times
-</details>
-
-<details>
- <summary>to (required)</summary>
- The end date for which we want to get availability times (exclusive)
-</details>
-
-<details>
- <summary>interval (required)</summary>
- The interval (in minutes) of the returned availability times.
- For example, a value of 15 would returns availability times such as *10:00*, *10:15*, *10:30*, *10:45*, etc..
-</details>
-
-<details>
- <summary>duration (required)</summary>
- The duration (in minutes) for which we need the resource.
-</details>
-
-<details>
- <summary>schedule (required)</summary>
- The schedule of the resource for each day of the week.
-
- Example:
- ```js
- {
-   monday: {
-     from: '09:00',
-     to: '17:00',
-     unavailability: [
-       { from: '12:00', to: '13:00' }
-     ]
-   },
- }
- ```
-</details>
-
-## Schedule intersection
-
-Using the same example as before, let's say that we also need to book a room for our appointment.
-
-So, we need to intersect the doctor's availability times with the room's availability times, considering that:
-
-  * We can only book the room on weekdays from *8AM* to *8PM*
-
-  * The room is out of service from *February 6th* to *February 16th*
-
-```javascript
-import {Scheduler} from '@ssense/sscheduler';
-
-const scheduler = new Scheduler();
-const availability = scheduler.getIntersection({
-    from: '2017-02-01',
-    to: '2017-03-01',
-    duration: 60,
-    interval: 60,
-    schedules: [
-        // The doctor's schedule
-        {
-            weekdays: {
-                from: '09:00', to: '17:00',
-                unavailability: [
-                    { from: '12:00', to: '13:00' }
-                ]
-            },
-            unavailability: [
-                { from: '2017-02-20 00:00', to: '2017-02-27 00:00' }
-            ],
-            allocated: [
-              { from: '2017-02-01 13:00' , duration: 60 },
-              { from: '2017-02-01 14:00' , duration: 60 }
-            ]
-        },
-
-        // The room's schedule
-        {
-            weekdays: {
-                from: '08:00', to: '20:00',
-            },
-            unavailability: [
-                { from: '2017-02-06 00:00', to: '2017-02-16 00:00' }
-            ]
-        }
-    ]
 });
+console.log(balances);
 ```
 
-## Authors
-
-* **Mickael Burguet** - *Senior Developer* - [rundef](http://rundef.com)
+```json
+[
+  { month: '2016-11', startBalance: 100, endBalance: 160 },
+  { month: '2016-12', startBalance: 360, endBalance: 422 }
+]
+```
 
 ## License
 
