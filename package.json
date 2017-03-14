@@ -1,7 +1,7 @@
 {
-  "name": "adjust-balance",
+  "name": "balance-growth",
   "version": "1.0.0",
-  "description": "Adjust start-of-month and end-of-month balances excluding transactions",
+  "description": "Calculate monthly balance growth over time",
   "main": "./dist/index.js",
   "scripts": {
     "compile": "rm -rf dist/* && tsc",
@@ -13,11 +13,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rundef/node-adjust-balance.git"
+    "url": "git+https://github.com/rundef/node-balance-growth.git"
   },
   "keywords": [
-    "adjust",
     "balance",
+    "growth",
     "transaction"
   ],
   "author": "Mickael Burguet <www.rundef.com>",

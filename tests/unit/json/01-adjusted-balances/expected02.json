@@ -1,0 +1,12 @@
+[
+  { "date": "2016-11-01", "balance": 100 },
+  { "date": "2016-11-15", "balance": 128 },
+  { "date": "2016-11-30", "balance": 158, "eodBalance": 160 },
+  { "date": "2016-12-01", "balance": 360 },
+  { "date": "2016-12-03", "balance": 364 },
+  { "date": "2016-12-31", "balance": 420, "eodBalance": 422 },
+  { "date": "2017-01-01", "balance": 622 },
+  { "date": "2017-01-31", "balance": 622, "eodBalance": 622 },
+  { "date": "2017-02-01", "balance": 522 },
+  { "date": "2017-02-05", "balance": 522 }
+]

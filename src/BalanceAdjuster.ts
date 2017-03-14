@@ -1,41 +1,154 @@
 import * as moment from 'moment';
-import {
-  AdjustParams,
-  BalanceInTime,
-  TransactionInTime,
-  MonthlyBalance
-} from '../index.d';
+import {Params, BalanceInTime, TransactionInTime} from '../index.d';
 
 export class BalanceAdjuster {
-  public getGrowth(p: AdjustParams): MonthlyBalance[] {
-    return null;
+  protected isDayEqual(d1: moment.Moment, d2: moment.Moment): boolean {
+    if (d1.year() === d2.year()) {
+      if (d1.month() === d2.month()) {
+        return (d1.date() === d2.date());
+      }
+    }
+    return false;
   }
 
-  public adjust(p: AdjustParams): MonthlyBalance[] {
-    if (p.transactions && p.transactions.length) {
-      const adjustedBalances = this.getAdjustedBalances(p.balances, p.transactions);
-      console.log('adjustedBalances ',adjustedBalances);
-      return this.getAdjustedMonthlyBalances(adjustedBalances).map((e: any) => {
-        e.month = moment(e.month, 'YYYY-MM-DD').format('YYYY-MM');
-        return e
-      });
+  protected isDayGreater(d1: moment.Moment, d2: moment.Moment): boolean {
+    if (d1.year() === d2.year()) {
+      if (d1.month() === d2.month()) {
+        return (d1.date() > d2.date());
+      }
+      return (d1.month() > d2.month());
+    }
+    return (d1.year() > d2.year());
+  }
+
+  protected isDayGreaterOrEqual(d1: moment.Moment, d2: moment.Moment): boolean {
+    if (d1.year() === d2.year()) {
+      if (d1.month() === d2.month()) {
+        return (d1.date() >= d2.date());
+      }
+      return (d1.month() > d2.month());
+    }
+    return (d1.year() > d2.year());
+  }
+
+  protected isMonthGreaterOrEqual(d1: moment.Moment, d2: moment.Moment): boolean {
+    if (d1.year() === d2.year()) {
+      return (d1.month() >= d2.month());
+    }
+    return (d1.year() > d2.year());
+  }
+
+  protected isMonthLessThan(d1: moment.Moment, d2: moment.Moment): boolean {
+    if (d1.year() === d2.year()) {
+      return (d1.month() < d2.month());
+    }
+    return (d1.year() < d2.year());
+  }
+
+  protected loopEachMonth(balances: BalanceInTime<moment.Moment>[], maxDate: string, handler: Function): void {
+    let firstYear = balances[0].date.year();
+    let firstMonth = balances[0].date.month();
+    let lastYear = balances[balances.length - 1].date.year();
+    let lastMonth = balances[balances.length - 1].date.month();
+
+    if (maxDate) {
+      const tmp = moment(maxDate, 'YYYY-MM-DD');
+      lastYear = tmp.year();
+      lastMonth = tmp.month();
+    }
+
+    if (firstYear === lastYear) {
+      while (firstMonth <= lastMonth) {
+        handler(firstYear, firstMonth++);
+      }
     } else {
-      return this.getAdjustedMonthlyBalances(p.balances).map((e: any) => {
-        e.month = moment(e.month, 'YYYY-MM-DD').format('YYYY-MM');
-        return e
-      });
+      while (firstYear <= lastYear) {
+        while (firstMonth < 12) {
+          if (firstYear === lastYear && firstMonth > lastMonth) {
+            break;
+          }
+          handler(firstYear, firstMonth++);
+        }
+
+        firstYear++;
+        firstMonth = 0;
+      }
     }
   }
 
-  public getAdjustedBalances(balances: BalanceInTime<string>[], _transactions: TransactionInTime<string>[]): BalanceInTime<string>[] {
+  protected getTransactionsAmount(
+    minDate: moment.Moment,
+    maxDate: moment.Moment,
+    transactions: TransactionInTime<moment.Moment>[],
+  ): number {
+    const filteredTransactions = transactions.filter((t: TransactionInTime<moment.Moment>) => {
+      return this.isDayGreaterOrEqual(t.date, minDate) && this.isDayGreater(maxDate, t.date);
+    });
+
+    if (filteredTransactions.length === 1) {
+      return filteredTransactions[0].amount;
+    } else if (filteredTransactions.length > 1) {
+      return <number> filteredTransactions.reduce((prev: number, current: TransactionInTime<moment.Moment>) => {
+        return prev + current.amount;
+      }, 0);
+    }
+
+    return 0;
+  }
+
+  protected getBalanceForDate(
+    date: moment.Moment,
+    balances: BalanceInTime<moment.Moment>[],
+    transactions: TransactionInTime<moment.Moment>[],
+    index: number
+  ): BalanceInTime<moment.Moment> {
+    if (index > 1) {
+      let balanceDiff = (balances[index - 1].balance - balances[index - 2].balance);
+      const dayDiffPrev = balances[index - 1].date.diff(balances[index - 2].date, 'days');
+      let dayDiff = date.diff(balances[index - 1].date, 'days');
+
+      if (dayDiffPrev === 0) {
+        balanceDiff = (balances[index].balance - balances[index - 1].balance) +
+          (-1 * this.getTransactionsAmount(balances[index - 1].date, balances[index].date, transactions));
+        const dayDiffNext = balances[index].date.diff(balances[index - 1].date, 'days');
+        dayDiff = date.diff(balances[index - 1].date, 'days');
+
+        return {
+          date,
+          balance: Math.round(balances[index - 1].balance + (dayDiff * (balanceDiff / dayDiffNext))),
+          eodBalance: Math.round(balances[index - 1].balance + ((dayDiff + 1) * (balanceDiff / dayDiffNext)))
+        };
+      } else {
+        return {
+          date,
+          balance: Math.round(balances[index - 1].balance + (dayDiff * (balanceDiff / dayDiffPrev))),
+          eodBalance: Math.round(balances[index - 1].balance + ((dayDiff + 1) * (balanceDiff / dayDiffPrev)))
+        };
+      }
+    } else if (index === 1) {
+      const balanceDiff = (balances[index].balance - balances[index - 1].balance) +
+        (-1 * this.getTransactionsAmount(balances[index - 1].date, balances[index].date, transactions));
+      const dayDiffPrev = balances[index].date.diff(balances[index - 1].date, 'days');
+      const dayDiff = date.diff(balances[index - 1].date, 'days');
+
+      return {
+        date,
+        balance: Math.round(balances[index - 1].balance + (dayDiff * (balanceDiff / dayDiffPrev))),
+        eodBalance: Math.round(balances[index - 1].balance + ((dayDiff + 1) * (balanceDiff / dayDiffPrev)))
+      };
+    }
+    return null;
+  }
+
+  public getAdjustedBalances(p: Params<string>): BalanceInTime<string>[] {
     // Convert date to 'moment' objects
-    const balancesInTime = balances.map((b: BalanceInTime<string>): BalanceInTime<moment.Moment> => {
+    const balances = p.balances.map((b: BalanceInTime<string>): BalanceInTime<moment.Moment> => {
       return {
         balance: b.balance,
         date: moment(b.date, 'YYYY-MM-DD')
       };
     });
-    const transactions = _transactions.map((t: TransactionInTime<string>): TransactionInTime<moment.Moment> => {
+    const transactions = (p.transactions || []).map((t: TransactionInTime<string>): TransactionInTime<moment.Moment> => {
       return {
         amount: t.amount,
         date: moment(t.date, 'YYYY-MM-DD')
@@ -44,11 +157,12 @@ export class BalanceAdjuster {
 
     const transactionsPerMonth: any = {};
     for (const t of transactions) {
-      for (let i = 0; i < balancesInTime.length; i++) {
-        // Deduct transaction amount from balance where they are in the same month and balance.day >= transaction.day
-        if (balancesInTime[i].date.year() === t.date.year() && balancesInTime[i].date.month() === t.date.month() &&
-          balancesInTime[i].date.date() >= t.date.date()) {
-          balancesInTime[i].balance += -1 * t.amount;
+      for (const b of balances) {
+        // Deduct transaction amount from balance if they are in the same month and balance.day >= transaction.day
+        if (b.date.year() === t.date.year() &&
+          b.date.month() === t.date.month() &&
+          b.date.date() >= t.date.date()) {
+          b.balance += -1 * t.amount;
         }
       }
       
@@ -57,212 +171,74 @@ export class BalanceAdjuster {
       transactionsPerMonth[month] = (transactionsPerMonth[month] || 0) + t.amount;
     }
 
-    for (let i = 0; i < balancesInTime.length - 1; i++) {
-      // if month in transactionsPerMonth ->
-       // if lastDayOfMonth has no balance ->
-    }
+    let index = 0;
+    this.loopEachMonth(balances, p.maxDate, (year: number, month: number): void => {
+      const startOfMonth = moment(`${year}-${month + 1}-01`, 'YYYY-MM-DD');
+      const endOfLastMonth = startOfMonth.clone().subtract({ month: 1 }).endOf('month');
 
-
-/*
-    let transactionsThisMonth = 0;
-    for (let i = 0; i < balancesInTime.length - 1; i++) {
-      const currentBalance = balancesInTime[i];
-      const nextBalance = balancesInTime[i + 1];
-
-      // Loop over the transactions
-      for (const t of transactions) {
-        // Transaction occured between currentBalance and nextBalance
-        if (t.date.isSameOrAfter(currentBalance.date) && t.date.isBefore(nextBalance.date)) {
-          // currentBalance and nextBalance are in the same month
-          if (t.date.isSame(currentBalance.date)) {
-            currentBalance.balance += t.amount;
-          }
-
-          // We deduct the transaction amount from all the balances of the current month
-          for (let j = i + 1; j < balancesInTime.length; j++) {
-            const tmpBalance = balancesInTime[j];
-            if (t.date.year() === tmpBalance.date.year() && t.date.month() === tmpBalance.date.month()) {
-              tmpBalance.balance += t.amount;
-            } else {
-              break;
-            }
-          }
+      for (; index < balances.length; index++) {
+        if (this.isDayGreaterOrEqual(balances[index].date, startOfMonth)) {
+          break;
         }
       }
 
-
-       
-      //if (nextBalance && curBalance != SAME MONTH && curBalance != LAST DAY OF MONTH && transactions in the month of curBalance) {
-      //  add adjustedBalance -> last day of month
-      //  balance = firstBalanceOfMonth + (lastBalanceOfMonth - firstBalanceOfMonth)*(diff days [end of month - lastBalanceOfMonth]) - (sum_transactions)
-      //}
-
-      const endOfMonth = currentBalance.date.clone().endOf('month');
-      if (currentBalance.date.month() !== nextBalance.date.month() &&
-        !currentBalance.date.isSame(endOfMonth) &&
-        true
-        //transactionsThisMonth !== 0
-      ) {
-        // get previous balance && first balance of month
-        balancesInTime.splice(i + 1, 0, {
-          date: endOfMonth,
-          balance: -5 //transactionsThisMonth + currentBalance.balance
+      // Add balance for the last day of the previous month
+      if (index >= balances.length) {
+        balances.splice(index, 0, {
+          date: endOfLastMonth,
+          balance: balances[balances.length - 1].eodBalance || balances[balances.length - 1].balance
         });
-        i++;
+        index++;
+      } else if (!this.isDayEqual(balances[index].date, endOfLastMonth)) {
+        if (index >= 1) {
+          const balance = this.getBalanceForDate(endOfLastMonth, balances, transactions, index);
+          balances.splice(index, 0, balance);
+          index++;
+        }
       }
-      //if (currentBalance.date.month() !== nextBalance.date.month() &&
-      //nextBalance.date != THE FIRST && transactionsThisMonth !== 0
 
-      //add date=startOfnextMonth balance=balanceEndOfLastMonth + transactionsThisMonth
-    }
-*/
-    return balancesInTime.map((b: BalanceInTime<moment.Moment>): BalanceInTime<string> => {
-      return {
-        date: b.date.format('YYYY-MM-DD'),
-        balance: b.balance,
-      };
+      // Add balance for the first day of the month
+      if ((p.maxDate && this.isDayGreater(moment(p.maxDate, 'YYYY-MM-DD'), startOfMonth)) || !p.maxDate) {
+        if (index >= balances.length) {
+          balances.splice(index, 0, {
+            date: startOfMonth,
+            balance: (balances[balances.length - 1].eodBalance || balances[balances.length - 1].balance) +
+               (transactionsPerMonth[endOfLastMonth.format('YYYY-MM')] || 0)
+          });
+          index++;
+        } else if (!this.isDayEqual(balances[index].date, startOfMonth)) {
+          if (index > 1) {
+            balances.splice(index, 0, {
+              date: startOfMonth,
+              balance: balances[index - 1].eodBalance + (transactionsPerMonth[endOfLastMonth.format('YYYY-MM')] || 0)
+            });
+            index++;
+          } else if (index < balances.length - 1) {
+            const transactionAmount = this.getTransactionsAmount(balances[index].date.clone().startOf('month'), balances[index + 1].date, transactions);
+
+            const balanceDiff = (balances[index + 1].balance - balances[index].balance) + (-1 * transactionAmount);
+            const dayDiffNext = balances[index + 1].date.diff(balances[index].date, 'days');
+            const dayDiff = balances[index].date.diff(startOfMonth, 'days');
+
+            balances.splice(index, 0, {
+              date: startOfMonth,
+              balance: Math.round(balances[index].balance - (balanceDiff / dayDiffNext * dayDiff)),
+            });
+            index++;
+          }
+        }
+      }
     });
 
-
-  
-/*
-const balances = [
-  { date: '2016-11-01', balance: 100 },
-  { date: '2016-11-14', balance: 350 },
-  { date: '2016-11-15', balance: 328 },
-  { date: '2016-12-03', balance: 564 },
-];
-const transactions = [
-  { date: '2016-11-02', amount: 200, type: 'in' },
-  { date: '2016-12-02', amount: 200, type: 'in' },
-];
-
-ADJUSTED =>
-  { date: '2016-11-01', balance: 100 },
-  { date: '2016-11-14', balance: 150 },
-  { date: '2016-11-15', balance: 128 },
-  { date: '2016-11-30', balance: 160 },
-  { date: '2016-12-01', balance: 360 },
-  { date: '2016-12-03', balance: 364 },
-ADJUSTED CURRENT =>
-
-[ { date: '2016-11-01', balance: 100 },
-  { date: '2016-11-14', balance: 150 },
-  { date: '2016-11-15', balance: 128 },
-  { date: '2016-11-30', balance: 128 },
-  { date: '2016-12-03', balance: 364 } ]
-*/
-  }
-
-  protected getMissingMonthBalances(date: moment.Moment, balance: number, previousDate: moment.Moment, previousBalance: number): MonthlyBalance[] {
-    const missing: MonthlyBalance[] = [];
-    const curDate = previousDate.clone().add({ months: 1 });
-
-    // Loop over all the months between <previousDate> and <date>
-    while (curDate.isBefore(date)) {
-      const balanceDiff = balance - previousBalance;
-      const dayDiff = date.diff(previousDate, 'days');
-      const dayDiffCurDate = curDate.diff(previousDate, 'days');
-
-      // Append starting balance for the missing month
-      const newBalance: MonthlyBalance = {
-        month: curDate.format('YYYY-MM-DD'),
-        startBalance: Math.round(previousBalance + (balanceDiff / dayDiff) * (dayDiffCurDate)),
-        endBalance: null
-      };
-      missing.push(newBalance);
-      previousBalance = newBalance.startBalance;
-
-      previousDate = curDate.clone();
-      curDate.add({ months: 1 });
-    }
-    
-    return missing;
-  }
-
-  protected getAdjustedMonthlyBalances(balancesInTime: BalanceInTime<string>[]): MonthlyBalance[] {
-    let balancePerMonths: MonthlyBalance[] = [];
-    let currentYear = null;
-    let currentMonth = null;
-
-    const setEndOfLastMonthBalance = (balance: number): void => {
-      if (balancePerMonths.length) {
-        balancePerMonths[balancePerMonths.length -1].endBalance = balance;
+    return balances.map((b: BalanceInTime<moment.Moment>): BalanceInTime<string> => {
+      const b2: BalanceInTime<string> = {
+        date: b.date.format('YYYY-MM-DD'),
+        balance: b.balance
       }
-    }
-
-    // Loop over all the balances that we have
-    for (let i = 0; i < balancesInTime.length; i = i + 1) {
-      const currentBalance = balancesInTime[i];
-      const date = moment(currentBalance.date);
-
-      // If the current's balance month/year isn't the same at the previous one
-      if ((currentYear === null && currentMonth === null) || date.year() !== currentYear || date.month() !== currentMonth) {
-        // If the balance's date is not yyyy-mm-01
-        if (date.date() !== 1) {
-          let dayDiff = 0;
-          let balanceDiff = 0;
-
-          // Find avg growth per day between last balance and current balance
-          if (i > 0) {
-            balanceDiff = currentBalance.balance - balancesInTime[i - 1].balance;
-            const lastDate = moment(balancesInTime[i - 1].date);
-            dayDiff = date.diff(lastDate, 'days');
-          // Find avg growth per day between current balance and next balance
-          } else if (i === 0 && i < balancesInTime.length - 1) {
-            balanceDiff = balancesInTime[i + 1].balance - currentBalance.balance;
-            const nextDate = moment(balancesInTime[i + 1].date);
-            dayDiff = nextDate.diff(date, 'days');
-          }
-
-          if (dayDiff > 0) {
-            const firstDayOfMonth = date.clone().startOf('month');
-            const dayDiffUntilFirst = date.diff(firstDayOfMonth, 'days');
-
-            const curMonthBalance: MonthlyBalance = {
-              month: firstDayOfMonth.format('YYYY-MM-DD'),
-              startBalance: Math.round(currentBalance.balance - (balanceDiff / dayDiff) * dayDiffUntilFirst),
-              endBalance: null
-            };
-            setEndOfLastMonthBalance(curMonthBalance.startBalance);
-            // If at least 1 month with balance
-            if (balancePerMonths.length > 0) {
-              // Find months without balance
-              const missing = this.getMissingMonthBalances(
-                firstDayOfMonth,
-                curMonthBalance.startBalance,
-                moment(balancePerMonths[balancePerMonths.length -1].month),
-                balancePerMonths[balancePerMonths.length -1].startBalance
-              );
-              if (missing.length) {
-                // Set all of the endBalance = nextMonth.startBalance
-                setEndOfLastMonthBalance(missing[0].startBalance);
-                for (let j = 0; j + 1 < missing.length; j++) {
-                  const tmpBalance = missing[j + 1].startBalance;
-                  missing[j].endBalance = tmpBalance;
-                }
-                balancePerMonths = balancePerMonths.concat(missing);
-                missing[missing.length - 1].endBalance = curMonthBalance.startBalance;
-              }
-            }
-            balancePerMonths.push(curMonthBalance);
-          }
-        } else {
-          // The balance's date is at yyyy-mm-01
-          const curMonthBalance: MonthlyBalance = {
-            month: currentBalance.date,
-            startBalance: currentBalance.balance,
-            endBalance: null
-          };
-          setEndOfLastMonthBalance(curMonthBalance.startBalance);
-          balancePerMonths.push(curMonthBalance);
-        }
-
-        currentYear = date.year();
-        currentMonth = date.month();
+      if (b.eodBalance !== undefined) {
+        b2.eodBalance = b.eodBalance;
       }
-    }
-
-    return balancePerMonths;
+      return b2;
+    });
   }
 }

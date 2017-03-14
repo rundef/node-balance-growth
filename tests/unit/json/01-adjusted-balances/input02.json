@@ -1,0 +1,13 @@
+{
+	"balances": [
+    { "date": "2016-11-01", "balance": 100 },
+    { "date": "2016-11-15", "balance": 328 },
+    { "date": "2016-12-03", "balance": 564 },
+    { "date": "2017-02-05", "balance": 522 }
+  ],
+  "transactions": [
+    { "date": "2016-11-02", "amount": 200 },
+    { "date": "2016-12-02", "amount": 200 },
+    { "date": "2017-01-05", "amount": -100 }
+  ]
+}

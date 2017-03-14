@@ -1,6 +1,7 @@
 export interface BalanceInTime<T> {
   date: T;
   balance: number;
+  eodBalance?: number;
 }
 
 export interface TransactionInTime<T> {
@@ -8,20 +9,31 @@ export interface TransactionInTime<T> {
   amount: number;
 }
 
-export interface AdjustParams {
-  balances: BalanceInTime<string>[];
-  transactions?: TransactionInTime<string>[];
-}
-
 export interface MonthlyBalance {
   month: string;
-  startBalance: number;
-  endBalance: number|null;
+  balance: number;
+  eomBalance: number|null;
+}
+
+export interface MonthlyBalanceGrowth extends MonthlyBalance {
+  growth: number;
+}
+
+export interface Params<T> {
+  balances: BalanceInTime<T>[];
+  transactions?: TransactionInTime<T>[];
+  maxDate?: string;
 }
 
 export class BalanceAdjuster {
   constructor();
+  getAdjustedBalances(p: Params<string>): BalanceInTime<string>[];
+}
 
-  adjust(params: AdjustParams): MonthlyBalance[];
-  getAdjustedBalances(balances: BalanceInTime<string>[], _transactions: TransactionInTime<string>[]): BalanceInTime<string>[];
+export class MonthlyBalanceAdjuster extends BalanceAdjuster {
+  getMonthlyBalances(p: Params<string>): MonthlyBalance[];
+}
+
+export class BalanceGrowth extends MonthlyBalanceAdjuster {
+  getGrowth(p: Params<string>): MonthlyBalanceGrowth[];
 }
