@@ -37,8 +37,8 @@ console.log(balances);
 
 ```json
 [
-  { 'month': '2016-11', 'balance': 100, 'eomBalance': 160 },
-  { 'month': '2016-12', 'balance': 360, 'eomBalance': 364 }
+  { "month": "2016-11", "balance": 100, "eomBalance": 160 },
+  { "month": "2016-12", "balance": 360, "eomBalance": 364 }
 ]
 ```
 
@@ -65,8 +65,8 @@ console.log(growth);
 
 ```json
 [
-  { 'month': '2016-11', 'balance': 100, 'eomBalance': 160, 'growth': 60 },
-  { 'month': '2016-12', 'balance': 360, 'eomBalance': 364, 'growth': 1 }
+  { "month": "2016-11", "balance": 100, "eomBalance": 160, "growth": 60 },
+  { "month": "2016-12", "balance": 360, "eomBalance": 364, "growth": 1 }
 ]
 ```
 
