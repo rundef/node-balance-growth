@@ -213,6 +213,12 @@ export class BalanceAdjuster {
               balance: balances[index - 1].eodBalance + (transactionsPerMonth[endOfLastMonth.format('YYYY-MM')] || 0)
             });
             index++;
+          } else if (index === 0) {
+            balances.splice(index, 0, {
+              date: startOfMonth,
+              balance: Math.round(balances[index].balance),
+            });
+            index++;
           } else if (index < balances.length - 1) {
             const transactionAmount = this.getTransactionsAmount(balances[index].date.clone().startOf('month'), balances[index + 1].date, transactions);
 

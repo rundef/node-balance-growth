@@ -18,7 +18,7 @@ export class BalanceGrowth extends MonthlyBalanceAdjuster {
         month: b.month,
         balance: b.balance,
         eomBalance: b.eomBalance,
-        growth: Math.round(100 * ((b.eomBalance / b.balance) - 1))
+        growth: b.balance === 0 ? 0 : Math.round(100 * ((b.eomBalance / b.balance) - 1))
       };
     });
   }

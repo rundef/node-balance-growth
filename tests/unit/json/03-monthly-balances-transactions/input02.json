@@ -1,5 +1,6 @@
 {
   "balances": [
+    { "date": "2016-11-01", "balance": 100 },
     { "date": "2016-11-05", "balance": 308 },
     { "date": "2016-12-01", "balance": 860 }
   ],
