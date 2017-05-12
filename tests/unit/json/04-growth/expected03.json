@@ -1,5 +1,5 @@
 [
   { "month": "2016-11", "balance": 1000, "eomBalance": 1300, "growth": 30 },
-  { "month": "2016-12", "balance": 1400, "eomBalance": 1710, "growth": 22 },
-  { "month": "2017-01", "balance": 1710, "eomBalance": null, "growth": null }
+  { "month": "2016-12", "balance": 1400, "eomBalance": 1715, "growth": 23 },
+  { "month": "2017-01", "balance": 1715, "eomBalance": null, "growth": null }
 ]

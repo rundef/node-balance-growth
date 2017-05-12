@@ -102,42 +102,16 @@ export class BalanceAdjuster {
     transactions: TransactionInTime<moment.Moment>[],
     index: number
   ): BalanceInTime<moment.Moment> {
-    if (index > 1) {
-      let balanceDiff = (balances[index - 1].balance - balances[index - 2].balance);
-      const dayDiffPrev = balances[index - 1].date.diff(balances[index - 2].date, 'days');
-      let dayDiff = date.diff(balances[index - 1].date, 'days');
+    const balanceDiff = (balances[index].balance - balances[index - 1].balance) +
+      (-1 * this.getTransactionsAmount(balances[index - 1].date, balances[index].date, transactions));
+    const dayDiffPrev = balances[index].date.diff(balances[index - 1].date, 'days');
+    const dayDiff = date.diff(balances[index - 1].date, 'days');
 
-      if (dayDiffPrev === 0) {
-        balanceDiff = (balances[index].balance - balances[index - 1].balance) +
-          (-1 * this.getTransactionsAmount(balances[index - 1].date, balances[index].date, transactions));
-        const dayDiffNext = balances[index].date.diff(balances[index - 1].date, 'days');
-        dayDiff = date.diff(balances[index - 1].date, 'days');
-
-        return {
-          date,
-          balance: Math.round(balances[index - 1].balance + (dayDiff * (balanceDiff / dayDiffNext))),
-          eodBalance: Math.round(balances[index - 1].balance + ((dayDiff + 1) * (balanceDiff / dayDiffNext)))
-        };
-      } else {
-        return {
-          date,
-          balance: Math.round(balances[index - 1].balance + (dayDiff * (balanceDiff / dayDiffPrev))),
-          eodBalance: Math.round(balances[index - 1].balance + ((dayDiff + 1) * (balanceDiff / dayDiffPrev)))
-        };
-      }
-    } else if (index === 1) {
-      const balanceDiff = (balances[index].balance - balances[index - 1].balance) +
-        (-1 * this.getTransactionsAmount(balances[index - 1].date, balances[index].date, transactions));
-      const dayDiffPrev = balances[index].date.diff(balances[index - 1].date, 'days');
-      const dayDiff = date.diff(balances[index - 1].date, 'days');
-
-      return {
-        date,
-        balance: Math.round(balances[index - 1].balance + (dayDiff * (balanceDiff / dayDiffPrev))),
-        eodBalance: Math.round(balances[index - 1].balance + ((dayDiff + 1) * (balanceDiff / dayDiffPrev)))
-      };
-    }
-    return null;
+    return {
+      date,
+      balance: Math.round(balances[index - 1].balance + (dayDiff * (balanceDiff / dayDiffPrev))),
+      eodBalance: Math.round(balances[index - 1].balance + ((dayDiff + 1) * (balanceDiff / dayDiffPrev)))
+    };
   }
 
   public getAdjustedBalances(p: Params<string>): BalanceInTime<string>[] {

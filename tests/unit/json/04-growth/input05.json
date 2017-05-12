@@ -1,0 +1,15 @@
+{
+  "balances": [
+    { "date": "2017-01-12", "balance": 1522 },
+    { "date": "2017-02-01", "balance": 1593 },
+    { "date": "2017-02-15", "balance": 1593 },
+    { "date": "2017-03-01", "balance": 1593 },
+    { "date": "2017-03-15", "balance": 1593 },
+    { "date": "2017-04-01", "balance": 1541 },
+    { "date": "2017-04-15", "balance": 1638 },
+    { "date": "2017-05-01", "balance": 1511 }
+  ],
+  "transactions": [
+  ],
+  "maxDate": "2017-06-12"
+}
