@@ -1,0 +1,6 @@
+[
+  { "month": "2017-01", "balance": 2000, "eomBalance": 2500 },
+  { "month": "2017-02", "balance": 3500, "eomBalance": 4000 },
+  { "month": "2017-03", "balance": 5000, "eomBalance": 5500 },
+  { "month": "2017-04", "balance": 6500, "eomBalance": null }
+]

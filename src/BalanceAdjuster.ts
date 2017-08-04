@@ -31,6 +31,16 @@ export class BalanceAdjuster {
     return (d1.year() > d2.year());
   }
 
+  protected isDayLessThan(d1: moment.Moment, d2: moment.Moment): boolean {
+    if (d1.year() === d2.year()) {
+      if (d1.month() === d2.month()) {
+        return (d1.date() < d2.date());
+      }
+      return (d1.month() < d2.month());
+    }
+    return (d1.year() < d2.year());
+  }
+
   protected isMonthGreaterOrEqual(d1: moment.Moment, d2: moment.Moment): boolean {
     if (d1.year() === d2.year()) {
       return (d1.month() >= d2.month());
@@ -102,8 +112,17 @@ export class BalanceAdjuster {
     transactions: TransactionInTime<moment.Moment>[],
     index: number
   ): BalanceInTime<moment.Moment> {
-    const balanceDiff = (balances[index].balance - balances[index - 1].balance) +
-      (-1 * this.getTransactionsAmount(balances[index - 1].date, balances[index].date, transactions));
+    let curBalance = balances[index].balance;
+    let transactionsMinDate = balances[index - 1].date.clone();
+    if (balances[index].date.date() == 1) {
+      transactionsMinDate = date.clone().startOf('month');      
+    }
+
+    curBalance -= this.getTransactionsAmount(transactionsMinDate, balances[index].date, transactions);
+   
+    const prevBalance = balances[index - 1].balance;
+    let balanceDiff = curBalance - prevBalance;
+
     const dayDiffPrev = balances[index].date.diff(balances[index - 1].date, 'days');
     const dayDiff = date.diff(balances[index - 1].date, 'days');
 

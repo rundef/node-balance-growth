@@ -10,7 +10,6 @@ export class MonthlyBalanceAdjuster extends BalanceAdjuster {
         date: moment(b.date, 'YYYY-MM-DD')
       };
     });
-
     const monthlyBalances: MonthlyBalance[] = [];
     let index = 0;
     this.loopEachMonth(balances, p.maxDate, (year: number, month: number): void => {
