@@ -40,10 +40,10 @@
     "coveralls": "^2.11.15",
     "mocha": "^2.5.3",
     "nyc": "^8.4.0",
-    "ts-node": "^1.6.1",
+    "ts-node": "^3.3.0",
     "tslint": "^4.3.1",
     "tslint-microsoft-contrib": "^4.0.0",
-    "typescript": "^2.1.5"
+    "typescript": "^2.4.2"
   },
   "nyc": {
     "include": [
